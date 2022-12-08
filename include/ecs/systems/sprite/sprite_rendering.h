@@ -1,0 +1,7 @@
+#ifndef KASOUZA_MINI_SURVIVAL_ECS_SYSTEMS_SPRITE_SPRITE_RENDERING_H
+#define KASOUZA_MINI_SURVIVAL_ECS_SYSTEMS_SPRITE_SPRITE_RENDERING_H
+
+void init_sprite_rendering_system();
+void render_sprites();
+
+#endif

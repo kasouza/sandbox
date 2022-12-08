@@ -1,0 +1,10 @@
+
+#ifndef KASOUZA_SANDBOX_INCLUDE_MAIN_H
+#define KASOUZA_SANDBOX_INCLUDE_MAIN_H
+
+enum Error
+{
+    BOX_RENDER_INIT_ERROR = 1,
+};
+
+#endif
