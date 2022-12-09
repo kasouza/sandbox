@@ -7,6 +7,10 @@
 #define BOX_MAX(a, b) ((a) > (b) ? (a) : (b))
 #define BOX_CLAMP(n, min, max) (BOX_MIN(BOX_MAX(n, min), max))
 
+#define BOX_INDEX(x, y, max_x) ((x) + (y) * (max_x))
+
 char *box_read_file(const char *path);
+void *box_malloc(unsigned long bytes);
+void *box_calloc(unsigned long n, unsigned long size);
 
 #endif

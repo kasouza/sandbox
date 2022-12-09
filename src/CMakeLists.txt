@@ -10,6 +10,7 @@ set(SOURCES
 	main.c
 	renderer.c
 	utils.c
+	world.c
 )
 
 file(COPY shaders DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

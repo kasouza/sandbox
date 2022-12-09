@@ -696,8 +696,7 @@ void box_render_draw_pixel(int x, int y, int r, int g, int b)
 
 void box_render_clear()
 {
-    memset(s_canvas, 0,
-           s_canvas_width * s_canvas_height * sizeof(union Pixel));
+    memset(s_canvas, 0, s_canvas_width * s_canvas_height * sizeof(union Pixel));
 }
 
 void box_render_present()
