@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define DEBUG_LOG(...)                                                         \
     if (box_render_log)                                                        \
@@ -309,6 +310,18 @@ struct Vertex
     GLfloat z;
 };
 
+union Pixel
+{
+    struct
+    {
+        unsigned char r;
+        unsigned char g;
+        unsigned char b;
+        unsigned char a;
+    };
+    unsigned char colors[4];
+};
+
 static bool init = false;
 
 static box_render_log_t box_render_log = NULL;
@@ -325,7 +338,7 @@ static int s_window_height = 600;
 static int s_canvas_width = 256;
 static int s_canvas_height = 256;
 static GLuint s_texture = 0;
-static unsigned char *s_canvas = NULL;
+static union Pixel *s_canvas = NULL;
 
 static float s_zoom = 1;
 static float s_cam_x_pos = 0;
@@ -607,19 +620,18 @@ static enum BoxRenderError setup_buffers()
     return BOX_RENDER_SUCCESS;
 }
 
-static enum BoxRenderError setup_framebuffer()
+static enum BoxRenderError setup_canvas()
 {
-    s_canvas =
-        malloc(s_canvas_width * s_canvas_height * TEXTURE_COLOR_CHANNELS);
+    s_canvas = malloc(s_canvas_width * s_canvas_height * sizeof(union Pixel));
     for (int x = 0; x < s_canvas_width; ++x)
     {
         for (int y = 0; y < s_canvas_width; ++y)
         {
-            int idx = (x + y * s_canvas_width) * TEXTURE_COLOR_CHANNELS;
-            s_canvas[idx] = 255;
-            s_canvas[idx + 1] = 255;
-            s_canvas[idx + 2] = 255;
-            s_canvas[idx + 3] = 255;
+            int idx = (x + y * s_canvas_width);
+            s_canvas[idx].r = 255;
+            s_canvas[idx].g = 255;
+            s_canvas[idx].b = 255;
+            s_canvas[idx].a = 255;
         }
     }
 
@@ -650,13 +662,16 @@ static enum BoxRenderError setup_programs()
     return BOX_RENDER_SUCCESS;
 }
 
-int box_render_init(box_render_log_t _log)
+int box_render_init(int canvas_width, int canvas_height, box_render_log_t _log)
 {
+    s_canvas_width = canvas_width;
+    s_canvas_height = canvas_height;
+
     box_render_log = _log;
     SETUP(glfw);
     SETUP(gl);
     SETUP(programs);
-    SETUP(framebuffer);
+    SETUP(canvas);
     SETUP(buffers);
 
     init = true;
@@ -669,16 +684,22 @@ void box_render_draw_pixel(int x, int y, int r, int g, int b)
     assert(x >= 0 && x < s_canvas_width);
     assert(y >= 0 && y < s_canvas_height);
 
-    int idx = (x + y * s_canvas_width) * TEXTURE_COLOR_CHANNELS;
-    s_canvas[idx] = r;
-    s_canvas[idx + 1] = g;
-    s_canvas[idx + 2] = b;
+    int idx = (x + y * s_canvas_width);
+    s_canvas[idx].r = r;
+    s_canvas[idx].g = g;
+    s_canvas[idx].b = b;
+    s_canvas[idx].a = 255;
 }
 
 #define SET_UNIFORM(uniform_func, program, name, ...)                          \
     uniform_func(glGetUniformLocation(program, name), __VA_ARGS__)
 
-void box_render_clear() {}
+void box_render_clear()
+{
+    memset(s_canvas, 0,
+           s_canvas_width * s_canvas_height * sizeof(union Pixel));
+}
+
 void box_render_present()
 {
     glBindTexture(GL_TEXTURE_2D, s_texture);

@@ -31,7 +31,7 @@ enum BoxRenderError
     BOX_RENDER_FRAMEBUFFER_CREATION_ERROR,
 };
 
-int box_render_init(box_render_log_t log);
+int box_render_init(int canvas_width, int canvas_height, box_render_log_t _log);
 void box_render_draw_pixel(int x, int y, int r, int g, int b);
 void box_render_clear();
 void box_render_present();

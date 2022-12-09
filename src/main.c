@@ -9,6 +9,10 @@
 #include <stdlib.h>
 #include <time.h>
 
+#define WORLD_SIZE 256
+
+static int buffer[WORLD_SIZE * WORLD_SIZE * 4] = {0};
+
 static bool s_running = false;
 
 void canvas_click_cb(int x, int y, enum BoxMouseButton button,
@@ -16,7 +20,11 @@ void canvas_click_cb(int x, int y, enum BoxMouseButton button,
 {
     if (button == BOX_MOUSE_BUTTON_1 && action == BOX_PRESS)
     {
-        box_render_draw_pixel(x, y, 0, 0, 0);
+        int idx = (x + y * WORLD_SIZE) * 4;
+        buffer[idx] = 255;
+        buffer[idx + 1] = 0;
+        buffer[idx + 2] = 0;
+        buffer[idx + 3] = 255;
     }
 }
 
@@ -31,7 +39,7 @@ void keyboard_cb(enum BoxKey key, enum BoxInputAction action)
 int main()
 {
     srand(time(NULL));
-    if (box_render_init((box_render_log_t)printf) != 0)
+    if (box_render_init(WORLD_SIZE, WORLD_SIZE, (box_render_log_t)printf) != 0)
     {
         err(BOX_RENDER_INIT_ERROR, "Could not initialize renderer.");
     }
@@ -53,6 +61,18 @@ int main()
     s_running = true;
     while (s_running)
     {
+        box_render_clear();
+        for (int x = 0; x < WORLD_SIZE; ++x)
+        {
+            for (int y = 0; y < WORLD_SIZE; ++y)
+            {
+                int idx = (x + y * WORLD_SIZE) * 4;
+                int red = buffer[idx];
+                int green = buffer[idx];
+                int blue = buffer[idx];
+                box_render_draw_pixel(x, y, red, green, blue);
+            }
+        }
         box_render_present();
     }
 
