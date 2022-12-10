@@ -132,6 +132,6 @@ void box_tick_world(struct BoxWorld *world)
         system_idx++;
     }
 
-	box_free_world(output_world);
-	output_world = NULL;
+    box_free_world(output_world);
+    output_world = NULL;
 }

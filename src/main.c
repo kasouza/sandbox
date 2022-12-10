@@ -1,5 +1,6 @@
 #include "main.h"
 #include "renderer.h"
+#include "systems/conways_game_of_life.h"
 #include "utils.h"
 #include "world.h"
 
@@ -11,61 +12,39 @@
 #include <time.h>
 
 #define WORLD_SIZE 256
-
-static int buffer[WORLD_SIZE * WORLD_SIZE * 4] = {0};
 static struct BoxWorld *s_world = NULL;
 
 static bool s_running = false;
+static bool s_pause = true;
 
 void canvas_click_cb(int x, int y, enum BoxMouseButton button,
                      enum BoxInputAction action)
 {
-    if (button == BOX_MOUSE_BUTTON_1 && action == BOX_PRESS)
+
+    unsigned char color = button == BOX_MOUSE_BUTTON_1 ? 255 : 0;
+    if (action == BOX_PRESS)
     {
-        int idx = (x + y * WORLD_SIZE) * 4;
-        buffer[idx] = 255;
-        buffer[idx + 1] = 0;
-        buffer[idx + 2] = 0;
-        buffer[idx + 3] = 255;
+        int idx = BOX_INDEX(x, y, s_world->width);
+        struct BoxTile *tile = &s_world->tiles[idx];
+        tile->color.r = color;
+        tile->color.g = color;
+        tile->color.b = color;
+        tile->color.a = color;
     }
 }
 
 void keyboard_cb(enum BoxKey key, enum BoxInputAction action)
 {
-    if (key == BOX_KEY_Q)
+    if (action == BOX_PRESS)
     {
-        s_running = false;
-    }
-}
-
-// Copy the input world into the output world.
-void copy_system(const struct BoxWorld *world_in, struct BoxWorld *world_out)
-{
-    for (int i = 0; i < 256 / 1; ++i)
-    {
-        for (int j = 0; j < 256 / 1; ++j)
+        if (key == BOX_KEY_Q)
         {
-            int idx = BOX_INDEX(i, j, world_in->width);
-            world_out->tiles[idx] = world_in->tiles[idx];
+            s_running = false;
         }
-    }
-}
 
-// Random color for each pixel/tile
-void random_system(const struct BoxWorld *world_in, struct BoxWorld *world_out)
-{
-    for (int i = 0; i < 256 / 1; ++i)
-    {
-        for (int j = 0; j < 256 / 1; ++j)
+        if (key == BOX_KEY_SPACE)
         {
-            int number = rand() % UINT8_MAX;
-            /* int number = 3; */
-            struct BoxTile *tile =
-                &world_out->tiles[BOX_INDEX(i, j, world_in->width)];
-            tile->color.r = number;
-            tile->color.g = number;
-            tile->color.b = number;
-            tile->color.a = 255;
+            s_pause = !s_pause;
         }
     }
 }
@@ -73,7 +52,6 @@ void random_system(const struct BoxWorld *world_in, struct BoxWorld *world_out)
 // Render the world to the screen.
 void render_system(const struct BoxWorld *world_in, struct BoxWorld *world_out)
 {
-
     for (int i = 0; i < 256 / 1; ++i)
     {
         for (int j = 0; j < 256 / 1; ++j)
@@ -88,7 +66,8 @@ void render_system(const struct BoxWorld *world_in, struct BoxWorld *world_out)
 int main()
 {
     srand(time(NULL));
-    if (box_render_init(WORLD_SIZE, WORLD_SIZE, (box_render_log_t)printf) != 0)
+    if (box_render_init(WORLD_SIZE, WORLD_SIZE, (box_render_log_t)printf,
+                        BOX_RENDER_UNLOCK_FPS) != 0)
     {
         err(BOX_RENDER_INIT_ERROR, "Could not initialize renderer.");
     }
@@ -98,14 +77,41 @@ int main()
 
     s_world = box_create_world(WORLD_SIZE, WORLD_SIZE);
 
-    box_add_system(s_world, random_system, 0);
+    for (int i = 0; i < s_world->width; ++i)
+    {
+        for (int j = 0; j < s_world->height; ++j)
+        {
+            if (i % 7 != 0 && j % 3 != 0)
+                continue;
+
+            struct BoxTile *tile =
+                &s_world->tiles[BOX_INDEX(i, j, s_world->width)];
+
+            tile->color.r = 255;
+            tile->color.g = 255;
+            tile->color.b = 255;
+            tile->color.a = 255;
+        }
+    }
+    box_add_system(s_world, conways_game_of_life, 0);
     box_add_system(s_world, render_system, BOX_SYSTEM_PASSTHROUGH);
 
     s_running = true;
+    bool removed = false;
     while (s_running)
     {
         box_render_clear();
         box_tick_world(s_world);
+        if (s_pause && !removed)
+        {
+            box_remove_system(s_world, 0);
+            removed = true;
+        }
+        else if (!s_pause && removed)
+        {
+            box_set_system(s_world, 0, conways_game_of_life, 0);
+            removed = false;
+        }
         box_render_present();
     }
 

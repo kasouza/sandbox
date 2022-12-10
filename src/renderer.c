@@ -310,19 +310,16 @@ struct Vertex
     GLfloat z;
 };
 
-union Pixel
+struct Pixel
 {
-    struct
-    {
-        unsigned char r;
-        unsigned char g;
-        unsigned char b;
-        unsigned char a;
-    };
-    unsigned char colors[4];
+    unsigned char r;
+    unsigned char g;
+    unsigned char b;
+    unsigned char a;
 };
 
 static bool init = false;
+static enum BoxRenderInitFlags s_flags = 0;
 
 static box_render_log_t box_render_log = NULL;
 static GLFWwindow *s_window = NULL;
@@ -338,7 +335,7 @@ static int s_window_height = 600;
 static int s_canvas_width = 256;
 static int s_canvas_height = 256;
 static GLuint s_texture = 0;
-static union Pixel *s_canvas = NULL;
+static struct Pixel *s_canvas = NULL;
 
 static float s_zoom = 1;
 static float s_cam_x_pos = 0;
@@ -622,7 +619,7 @@ static enum BoxRenderError setup_buffers()
 
 static enum BoxRenderError setup_canvas()
 {
-    s_canvas = malloc(s_canvas_width * s_canvas_height * sizeof(union Pixel));
+    s_canvas = malloc(s_canvas_width * s_canvas_height * sizeof(struct Pixel));
     for (int x = 0; x < s_canvas_width; ++x)
     {
         for (int y = 0; y < s_canvas_width; ++y)
@@ -662,7 +659,8 @@ static enum BoxRenderError setup_programs()
     return BOX_RENDER_SUCCESS;
 }
 
-int box_render_init(int canvas_width, int canvas_height, box_render_log_t _log)
+int box_render_init(int canvas_width, int canvas_height, box_render_log_t _log,
+                    enum BoxRenderInitFlags flags)
 {
     s_canvas_width = canvas_width;
     s_canvas_height = canvas_height;
@@ -675,6 +673,7 @@ int box_render_init(int canvas_width, int canvas_height, box_render_log_t _log)
     SETUP(buffers);
 
     init = true;
+    s_flags = flags;
 
     return BOX_RENDER_SUCCESS;
 }
@@ -696,11 +695,26 @@ void box_render_draw_pixel(int x, int y, int r, int g, int b)
 
 void box_render_clear()
 {
-    memset(s_canvas, 0, s_canvas_width * s_canvas_height * sizeof(union Pixel));
+    memset(s_canvas, 0,
+           s_canvas_width * s_canvas_height * sizeof(struct Pixel));
 }
 
 void box_render_present()
 {
+    static double start = -1;
+    double dt = 1.0 / 60.0;
+    if (start == -1)
+    {
+        start = glfwGetTime();
+    }
+    else
+    {
+        double now = glfwGetTime();
+        dt = now - start;
+        start = now;
+    }
+    printf("fps: %f\n", 1.0 / dt);
+
     glBindTexture(GL_TEXTURE_2D, s_texture);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, s_canvas_width, s_canvas_height,
                     GL_RGBA, GL_UNSIGNED_BYTE, s_canvas);
@@ -719,6 +733,10 @@ void box_render_present()
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     glfwPollEvents();
+
+    if (s_flags & BOX_RENDER_UNLOCK_FPS)
+        glfwSwapInterval(0);
+
     glfwSwapBuffers(s_window);
 }
 

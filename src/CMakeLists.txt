@@ -2,13 +2,14 @@ if(MSVC)
 	set(COMPILE_OPTIONS /W4)
 	# target_compile_options(${LIB_NAME} PRIVATE /W4)
 else()
-	set(COMPILE_OPTIONS -Wall -Wextra -pedantic)
+	set(COMPILE_OPTIONS -Wall -Wextra -pedantic -Og)
 	# target_compile_options(${LIB_NAME} PRIVATE -Wall -Wextra -pedantic)
 endif()
 
 set(SOURCES
 	main.c
 	renderer.c
+	systems/conways_game_of_life.c
 	utils.c
 	world.c
 )
