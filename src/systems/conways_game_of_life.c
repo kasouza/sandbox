@@ -10,64 +10,77 @@ inline static int count_neighbors(const struct BoxWorld *world_in, int x, int y)
 
     // North West
     sum += ((x > 0) && (y > 0)) &&
-           (world_in->tiles[BOX_INDEX(x - 1, y - 1, w)].color.r == 255);
+           (BOX_TILE_AT(x - 1, y - 1, world_in).type == BOX_TILE_CGOL_CELL);
 
     // North
-    sum += (y > 0) && (world_in->tiles[BOX_INDEX(x, y - 1, w)].color.r == 255);
+    sum +=
+        (y > 0) && (BOX_TILE_AT(x, y - 1, world_in).type == BOX_TILE_CGOL_CELL);
 
     // North East
     sum += ((x < w) && (y > 0)) &&
-           (world_in->tiles[BOX_INDEX(x + 1, y - 1, w)].color.r == 255);
+           (BOX_TILE_AT(x + 1, y - 1, world_in).type == BOX_TILE_CGOL_CELL);
 
     // West
-    sum += (x > 0) && (world_in->tiles[BOX_INDEX(x - 1, y, w)].color.r == 255);
+    sum +=
+        (x > 0) && (BOX_TILE_AT(x - 1, y, world_in).type == BOX_TILE_CGOL_CELL);
 
     // East
-    sum += (x < w) && (world_in->tiles[BOX_INDEX(x + 1, y, w)].color.r == 255);
+    sum +=
+        (x < w) && (BOX_TILE_AT(x + 1, y, world_in).type == BOX_TILE_CGOL_CELL);
 
     // South West
     sum += ((x > 0) && (y < h)) &&
-           (world_in->tiles[BOX_INDEX(x - 1, y + 1, w)].color.r == 255);
+           (BOX_TILE_AT(x - 1, y + 1, world_in).type == BOX_TILE_CGOL_CELL);
 
     // South
-    sum += (y < h) && (world_in->tiles[BOX_INDEX(x, y + 1, w)].color.r == 255);
+    sum +=
+        (y < h) && (BOX_TILE_AT(x, y + 1, world_in).type == BOX_TILE_CGOL_CELL);
 
     // South East
     sum += ((x < w) && (y < h)) &&
-           (world_in->tiles[BOX_INDEX(x + 1, y + 1, w)].color.r == 255);
+           (BOX_TILE_AT(x + 1, y + 1, world_in).type == BOX_TILE_CGOL_CELL);
 
     return sum;
 }
 
-void conways_game_of_life(const struct BoxWorld *world_in,
-                          struct BoxWorld *world_out)
+void box_conways_game_of_life(struct BoxWorld *world)
 {
-    for (int i = 0; i < world_in->width; ++i)
+    struct BoxWorld *world_out = box_create_world(world->width, world->height);
+
+    for (int i = 0; i < world->width; ++i)
     {
-        for (int j = 0; j < world_in->height; ++j)
+        for (int j = 0; j < world->height; ++j)
         {
-            int neighbor_count = count_neighbors(world_in, i, j);
-            int idx = BOX_INDEX(i, j, world_in->width);
-
-            struct BoxTile tile = world_in->tiles[idx];
-            struct BoxTile *next_tile = &world_out->tiles[idx];
-
-            if ((tile.color.r == 0 && neighbor_count == 3) ||
-                (tile.color.r == 255 &&
-                 (neighbor_count == 2 || neighbor_count == 3)))
             {
-                next_tile->color.r = 255;
-                next_tile->color.g = 255;
-                next_tile->color.b = 255;
-                next_tile->color.a = 255;
-            }
-            else
-            {
-                next_tile->color.r = 0;
-                next_tile->color.g = 0;
-                next_tile->color.b = 0;
-                next_tile->color.a = 0;
+                int idx = BOX_TILE_INDEX(i, j, world);
+
+                struct BoxTile tile = world->tiles[idx];
+                struct BoxTile *next_tile = &world_out->tiles[idx];
+
+                if (tile.type != BOX_TILE_EMPTY &&
+                    tile.type != BOX_TILE_CGOL_CELL)
+                {
+                    *next_tile = tile;
+                }
+
+                int neighbor_count = count_neighbors(world, i, j);
+                if ((tile.type == BOX_TILE_EMPTY && neighbor_count == 3) ||
+                    (tile.type == BOX_TILE_CGOL_CELL &&
+                     (neighbor_count == 2 || neighbor_count == 3)))
+                {
+                    next_tile->type = BOX_TILE_CGOL_CELL;
+                }
+                else if (tile.type == BOX_TILE_CGOL_CELL)
+                {
+                    next_tile->type = BOX_TILE_EMPTY;
+                }
             }
         }
     }
+
+    struct BoxTile *temp_tiles = world->tiles;
+    world->tiles = world_out->tiles;
+    world_out->tiles = temp_tiles;
+
+    box_free_world(world_out);
 }

@@ -713,7 +713,7 @@ void box_render_present()
         dt = now - start;
         start = now;
     }
-    printf("fps: %f\n", 1.0 / dt);
+	printf("fps: %f\n", 1.0 / dt);
 
     glBindTexture(GL_TEXTURE_2D, s_texture);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, s_canvas_width, s_canvas_height,
@@ -724,9 +724,9 @@ void box_render_present()
 
     glBindVertexArray(s_rect_vao);
     glUseProgram(s_canvas_program);
-    SET_UNIFORM(glUniform1f, s_canvas_program, "scale", s_zoom);
-    SET_UNIFORM(glUniform1f, s_canvas_program, "x_pos", s_cam_x_pos);
-    SET_UNIFORM(glUniform1f, s_canvas_program, "y_pos", s_cam_y_pos);
+	SET_UNIFORM(glUniform1f, s_canvas_program, "scale", s_zoom);
+	SET_UNIFORM(glUniform1f, s_canvas_program, "x_pos", s_cam_x_pos);
+	SET_UNIFORM(glUniform1f, s_canvas_program, "y_pos", s_cam_y_pos);
     SET_UNIFORM(glUniform1f, s_canvas_program, "aspect_ratio",
                 (float)s_window_width / s_window_height);
 

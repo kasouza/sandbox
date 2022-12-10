@@ -1,11 +1,12 @@
 #ifndef KASOUZA_SANDBOX_INCLUDE_WORLD_H
 #define KASOUZA_SANDBOX_INCLUDE_WORLD_H
 
-#define WORLD_SIZE 256
 #define BOX_MAX_SYSTEMS 32
 
-// #define BOX_SYSTEM_NO_OUTPUT 			0x00000001
-// #define BOX_SYSTEM_EMPTY_OUTPUT_BUFFER 	0x00000010
+// For column major things
+#define BOX_TILE_INDEX(x, y, world) ((x) + (y) * (world->width))
+#define BOX_TILE_AT(x, y, world) (world->tiles[BOX_TILE_INDEX((x), (y), world)])
+#define BOX_TILE_DATA(tile) (box_tile_data_map[tile.type])
 
 enum BoxSystemFlags
 {
@@ -20,17 +21,30 @@ enum BoxSystemFlags
 };
 
 struct BoxWorld;
-typedef void (*box_system_t)(const struct BoxWorld *world_in,
-                             struct BoxWorld *world_out);
 
 enum BoxTileType
 {
-    NONE,
-    AIR,
-    DIRT
+    BOX_TILE_EMPTY,
+    BOX_TILE_BARRIER,
+    BOX_TILE_AIR,
+    BOX_TILE_DIRT,
+    BOX_TILE_IRON,
+    BOX_TILE_CGOL_CELL,
+	BOX_TILE_WATER,
+
+    // For Initializing arrays and stuff
+    BOX_TILE_LAST,
 };
 
-struct BoxTile
+enum BoxSimulationType
+{
+    BOX_SOLID,
+    BOX_SAND,
+    BOX_LIQUID,
+    BOX_GAS,
+};
+
+struct BoxTileData
 {
     struct
     {
@@ -39,32 +53,28 @@ struct BoxTile
         unsigned char b;
         unsigned char a;
     } color;
+
+    double mass;
+    enum BoxSimulationType simulation_type;
 };
+
+extern const struct BoxTileData box_tile_data_map[BOX_TILE_LAST];
+
+struct BoxTile
+{
+    enum BoxTileType type;
+};
+
+extern const struct BoxTile box_empty_tile;
 
 struct BoxWorld
 {
     int width;
     int height;
     struct BoxTile *tiles;
-
-    struct
-    {
-        box_system_t run;
-        int flags;
-    } systems[BOX_MAX_SYSTEMS];
-    int system_count;
 };
 
 struct BoxWorld *box_create_world(int width, int height);
 void box_free_world(struct BoxWorld *world);
-
-int box_add_system(struct BoxWorld *world, box_system_t system,
-                   int system_flags);
-
-void box_set_system(struct BoxWorld *world, int system_id, box_system_t system,
-                    int system_flags);
-
-void box_remove_system(struct BoxWorld *world, int system_id);
-void box_tick_world(struct BoxWorld *world);
 
 #endif

@@ -2,7 +2,7 @@ if(MSVC)
 	set(COMPILE_OPTIONS /W4)
 	# target_compile_options(${LIB_NAME} PRIVATE /W4)
 else()
-	set(COMPILE_OPTIONS -Wall -Wextra -pedantic -Og)
+	set(COMPILE_OPTIONS -Wall -Wextra -pedantic -g -Og)
 	# target_compile_options(${LIB_NAME} PRIVATE -Wall -Wextra -pedantic)
 endif()
 
@@ -10,6 +10,8 @@ set(SOURCES
 	main.c
 	renderer.c
 	systems/conways_game_of_life.c
+	systems/falling_sand.c
+	systems/render.c
 	utils.c
 	world.c
 )

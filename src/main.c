@@ -1,6 +1,8 @@
 #include "main.h"
 #include "renderer.h"
 #include "systems/conways_game_of_life.h"
+#include "systems/falling_sand.h"
+#include "systems/render.h"
 #include "utils.h"
 #include "world.h"
 
@@ -12,24 +14,21 @@
 #include <time.h>
 
 #define WORLD_SIZE 256
+
 static struct BoxWorld *s_world = NULL;
 
 static bool s_running = false;
-static bool s_pause = true;
+static bool s_pause = false;
+static enum BoxTileType s_selected_tile = BOX_TILE_DIRT;
 
 void canvas_click_cb(int x, int y, enum BoxMouseButton button,
                      enum BoxInputAction action)
 {
-
-    unsigned char color = button == BOX_MOUSE_BUTTON_1 ? 255 : 0;
     if (action == BOX_PRESS)
     {
-        int idx = BOX_INDEX(x, y, s_world->width);
-        struct BoxTile *tile = &s_world->tiles[idx];
-        tile->color.r = color;
-        tile->color.g = color;
-        tile->color.b = color;
-        tile->color.a = color;
+        int type =
+            button == BOX_MOUSE_BUTTON_1 ? s_selected_tile : BOX_TILE_EMPTY;
+        BOX_TILE_AT(x, y, s_world).type = type;
     }
 }
 
@@ -46,19 +45,14 @@ void keyboard_cb(enum BoxKey key, enum BoxInputAction action)
         {
             s_pause = !s_pause;
         }
-    }
-}
 
-// Render the world to the screen.
-void render_system(const struct BoxWorld *world_in, struct BoxWorld *world_out)
-{
-    for (int i = 0; i < 256 / 1; ++i)
-    {
-        for (int j = 0; j < 256 / 1; ++j)
+        for (int i = 0; i < BOX_MIN(9, BOX_TILE_LAST); ++i)
         {
-            struct BoxTile tile = world_in->tiles[i + j * world_out->width];
-            box_render_draw_pixel(i, j, tile.color.r, tile.color.g,
-                                  tile.color.b);
+            if (key == BOX_KEY_0 + i)
+            {
+                s_selected_tile = i;
+                break;
+            }
         }
     }
 }
@@ -68,50 +62,26 @@ int main()
     srand(time(NULL));
     if (box_render_init(WORLD_SIZE, WORLD_SIZE, (box_render_log_t)printf,
                         BOX_RENDER_UNLOCK_FPS) != 0)
-    {
         err(BOX_RENDER_INIT_ERROR, "Could not initialize renderer.");
-    }
 
     box_render_set_canvas_click_callback(canvas_click_cb);
     box_render_set_keyboard_callback(keyboard_cb);
 
     s_world = box_create_world(WORLD_SIZE, WORLD_SIZE);
-
-    for (int i = 0; i < s_world->width; ++i)
-    {
-        for (int j = 0; j < s_world->height; ++j)
-        {
-            if (i % 7 != 0 && j % 3 != 0)
-                continue;
-
-            struct BoxTile *tile =
-                &s_world->tiles[BOX_INDEX(i, j, s_world->width)];
-
-            tile->color.r = 255;
-            tile->color.g = 255;
-            tile->color.b = 255;
-            tile->color.a = 255;
-        }
-    }
-    box_add_system(s_world, conways_game_of_life, 0);
-    box_add_system(s_world, render_system, BOX_SYSTEM_PASSTHROUGH);
-
     s_running = true;
-    bool removed = false;
+
     while (s_running)
     {
+        // Update the world
+        if (!s_pause)
+        {
+            box_falling_sand(s_world);
+            box_conways_game_of_life(s_world);
+        }
+
+        // Rendering
         box_render_clear();
-        box_tick_world(s_world);
-        if (s_pause && !removed)
-        {
-            box_remove_system(s_world, 0);
-            removed = true;
-        }
-        else if (!s_pause && removed)
-        {
-            box_set_system(s_world, 0, conways_game_of_life, 0);
-            removed = false;
-        }
+        box_render(s_world);
         box_render_present();
     }
 
