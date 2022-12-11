@@ -439,7 +439,6 @@ static void cursor_pos_callback(GLFWwindow *window, double x_pos, double y_pos)
     {
         if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1 + i) == GLFW_PRESS)
         {
-            printf("here: %d\n", i);
             button =
                 glfw_mouse_button_to_box_mouse_button[GLFW_MOUSE_BUTTON_1 + i];
             break;
@@ -740,13 +739,13 @@ void box_render_present()
         dt = now - start;
         start = now;
     }
-    /* printf("fps: %f\n", 1.0 / dt); */
+	printf("fps: %f\n", 1.0 / dt);
 
     glBindTexture(GL_TEXTURE_2D, s_texture);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, s_canvas_width, s_canvas_height,
                     GL_RGBA, GL_UNSIGNED_BYTE, s_canvas);
 
-    glClearColor(0.0, 1.0, 1.0, 1.0);
+    glClearColor(0.1, 0.1, 0.1, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
 
     glBindVertexArray(s_rect_vao);

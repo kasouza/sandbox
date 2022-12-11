@@ -3,5 +3,6 @@
 
 struct BoxWorld;
 void box_falling_sand(struct BoxWorld *world_in);
+void box_terminate_falling_sand();
 
 #endif

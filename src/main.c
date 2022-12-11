@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define WORLD_SIZE 256
+#define WORLD_SIZE 512
 
 static struct BoxWorld *s_world = NULL;
 
@@ -38,7 +38,6 @@ void canvas_click_cb(int x, int y, enum BoxMouseButton button,
         if (type == -1)
             return;
 
-
         for (int x_offset = -(s_cursor_size / 2);
              x_offset <= (s_cursor_size / 2); ++x_offset)
         {
@@ -48,7 +47,10 @@ void canvas_click_cb(int x, int y, enum BoxMouseButton button,
                 int tile_x = x + x_offset;
                 int tile_y = y + y_offset;
                 if (tile_x >= 0 && tile_x < s_world->width && tile_y >= 0 &&
-                    tile_y < s_world->height)
+                    tile_y < s_world->height &&
+                    (type == BOX_TILE_EMPTY ||
+                     BOX_TILE_AT(tile_x, tile_y, s_world).type ==
+                         BOX_TILE_EMPTY))
                 {
                     BOX_TILE_AT(tile_x, tile_y, s_world).type = type;
                 }
@@ -122,6 +124,7 @@ int main()
         box_render_present();
     }
 
+    box_terminate_falling_sand();
     box_render_terminate();
 
     box_free_world(s_world);

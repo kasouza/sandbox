@@ -1,6 +1,7 @@
 #ifndef KASOUZA_SANDBOX_INCLUDE_WORLD_H
 #define KASOUZA_SANDBOX_INCLUDE_WORLD_H
 
+#include <stdbool.h>
 #define BOX_MAX_SYSTEMS 32
 
 // For column major things

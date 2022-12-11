@@ -11,12 +11,12 @@ const struct BoxTileData box_tile_data_map[BOX_TILE_LAST] = {
     [BOX_TILE_BARRIER] =
         {
             .color = {.r = 100, .g = 100, .b = 100, .a = 100},
-            .mass = -1.0,
+            .mass = 9999.0,
             .simulation_type = BOX_SOLID,
         },
     [BOX_TILE_AIR] =
         {
-            .color = {.r = 0, .g = 0, .b = 0, .a = 0},
+            .color = {.r = 50, .g = 50, .b = 150, .a = 0},
             .mass = 0.1,
             .simulation_type = BOX_GAS,
         },
@@ -24,7 +24,7 @@ const struct BoxTileData box_tile_data_map[BOX_TILE_LAST] = {
     [BOX_TILE_DIRT] =
         {
             .color = {.r = 125, .g = 60, .b = 40, .a = 255},
-            .mass = 1.0,
+            .mass = 1.1,
             .simulation_type = BOX_SAND,
         },
 
@@ -50,7 +50,9 @@ const struct BoxTileData box_tile_data_map[BOX_TILE_LAST] = {
         },
 };
 
-const struct BoxTile box_empty_tile = {.type = BOX_TILE_EMPTY};
+const struct BoxTile box_empty_tile = {
+    .type = BOX_TILE_EMPTY,
+};
 
 struct BoxWorld *box_create_world(int width, int height)
 {
