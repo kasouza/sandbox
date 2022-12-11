@@ -387,8 +387,6 @@ static void keyboard_callback(GLFWwindow *window, int key, int scancode,
     }
 }
 
-static void cursor_pos_callback(GLFWwindow *window, double xpos, double ypos) {}
-
 // This function uses the calculations applied to vertices on the vertex shader
 // to get a "screen space" coordinate of the pixels in the screen and uses that
 // to transform `xpos` and `ypos` into indices for the s_canvas array
@@ -431,6 +429,35 @@ static void get_pos_in_indices(double xpos, double ypos, int *x_idx, int *y_idx)
         *y_idx = floor((ypos - screen_space_canvas_top) /
                        (screen_space_canvas_bottom - screen_space_canvas_top) *
                        s_canvas_height);
+    }
+}
+
+static void cursor_pos_callback(GLFWwindow *window, double x_pos, double y_pos)
+{
+    enum BoxMouseButton button = -1;
+    for (int i = 0; i < GLFW_MOUSE_BUTTON_LAST; ++i)
+    {
+        if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1 + i) == GLFW_PRESS)
+        {
+            printf("here: %d\n", i);
+            button =
+                glfw_mouse_button_to_box_mouse_button[GLFW_MOUSE_BUTTON_1 + i];
+            break;
+        }
+    }
+
+    if (button != BOX_MOUSE_BUTTON_NONE && s_canvas_click_cb != NULL)
+    {
+        int clicked_pixel_x = -1;
+        int clicked_pixel_y = -1;
+        get_pos_in_indices(x_pos, y_pos, &clicked_pixel_x, &clicked_pixel_y);
+
+        if (clicked_pixel_x >= 0 && clicked_pixel_x < s_canvas_width &&
+            clicked_pixel_y >= 0 && clicked_pixel_y < s_canvas_height)
+        {
+            s_canvas_click_cb(clicked_pixel_x, clicked_pixel_y, button,
+                              BOX_DRAG);
+        }
     }
 }
 
@@ -713,7 +740,7 @@ void box_render_present()
         dt = now - start;
         start = now;
     }
-	printf("fps: %f\n", 1.0 / dt);
+    /* printf("fps: %f\n", 1.0 / dt); */
 
     glBindTexture(GL_TEXTURE_2D, s_texture);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, s_canvas_width, s_canvas_height,
@@ -724,9 +751,9 @@ void box_render_present()
 
     glBindVertexArray(s_rect_vao);
     glUseProgram(s_canvas_program);
-	SET_UNIFORM(glUniform1f, s_canvas_program, "scale", s_zoom);
-	SET_UNIFORM(glUniform1f, s_canvas_program, "x_pos", s_cam_x_pos);
-	SET_UNIFORM(glUniform1f, s_canvas_program, "y_pos", s_cam_y_pos);
+    SET_UNIFORM(glUniform1f, s_canvas_program, "scale", s_zoom);
+    SET_UNIFORM(glUniform1f, s_canvas_program, "x_pos", s_cam_x_pos);
+    SET_UNIFORM(glUniform1f, s_canvas_program, "y_pos", s_cam_y_pos);
     SET_UNIFORM(glUniform1f, s_canvas_program, "aspect_ratio",
                 (float)s_window_width / s_window_height);
 

@@ -20,15 +20,40 @@ static struct BoxWorld *s_world = NULL;
 static bool s_running = false;
 static bool s_pause = false;
 static enum BoxTileType s_selected_tile = BOX_TILE_DIRT;
+static int s_cursor_size = 5;
+static int s_max_cursor_size = 35;
 
 void canvas_click_cb(int x, int y, enum BoxMouseButton button,
                      enum BoxInputAction action)
 {
-    if (action == BOX_PRESS)
+    if (action == BOX_PRESS || action == BOX_DRAG)
     {
-        int type =
-            button == BOX_MOUSE_BUTTON_1 ? s_selected_tile : BOX_TILE_EMPTY;
-        BOX_TILE_AT(x, y, s_world).type = type;
+        int type = -1;
+        if (button == BOX_MOUSE_BUTTON_1)
+            type = s_selected_tile;
+
+        else if (button == BOX_MOUSE_BUTTON_2)
+            type = BOX_TILE_EMPTY;
+
+        if (type == -1)
+            return;
+
+
+        for (int x_offset = -(s_cursor_size / 2);
+             x_offset <= (s_cursor_size / 2); ++x_offset)
+        {
+            for (int y_offset = -(s_cursor_size / 2);
+                 y_offset <= (s_cursor_size / 2); ++y_offset)
+            {
+                int tile_x = x + x_offset;
+                int tile_y = y + y_offset;
+                if (tile_x >= 0 && tile_x < s_world->width && tile_y >= 0 &&
+                    tile_y < s_world->height)
+                {
+                    BOX_TILE_AT(tile_x, tile_y, s_world).type = type;
+                }
+            }
+        }
     }
 }
 
@@ -46,6 +71,18 @@ void keyboard_cb(enum BoxKey key, enum BoxInputAction action)
             s_pause = !s_pause;
         }
 
+        if (key == BOX_KEY_UP)
+        {
+            s_cursor_size += 2;
+            s_cursor_size = BOX_MIN(s_cursor_size, s_max_cursor_size);
+        }
+
+        if (key == BOX_KEY_DOWN)
+        {
+            s_cursor_size -= 2;
+            s_cursor_size = BOX_MAX(s_cursor_size, 0);
+        }
+
         for (int i = 0; i < BOX_MIN(9, BOX_TILE_LAST); ++i)
         {
             if (key == BOX_KEY_0 + i)
@@ -60,8 +97,8 @@ void keyboard_cb(enum BoxKey key, enum BoxInputAction action)
 int main()
 {
     srand(time(NULL));
-    if (box_render_init(WORLD_SIZE, WORLD_SIZE, (box_render_log_t)printf,
-                        BOX_RENDER_UNLOCK_FPS) != 0)
+    if (box_render_init(WORLD_SIZE, WORLD_SIZE, (box_render_log_t)printf, 0) !=
+        0)
         err(BOX_RENDER_INIT_ERROR, "Could not initialize renderer.");
 
     box_render_set_canvas_click_callback(canvas_click_cb);

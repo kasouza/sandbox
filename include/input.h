@@ -129,6 +129,7 @@ enum BoxKey
 
 enum BoxMouseButton
 {
+	BOX_MOUSE_BUTTON_NONE,
     BOX_MOUSE_BUTTON_1,
     BOX_MOUSE_BUTTON_2,
     BOX_MOUSE_BUTTON_3,
@@ -143,6 +144,7 @@ enum BoxInputAction
 {
     BOX_PRESS,
     BOX_RELEASE,
+	BOX_DRAG,
 };
 
 #endif
