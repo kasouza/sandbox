@@ -10,7 +10,7 @@ cmake .. && cmake --build .
 ```
 And then run with:
 ```
-cd src    /
+cd src
 ./sandbox or` sandbox.exe
 ```
 Note: If you want to move the executable somewhere else make sure to also copy the `assets` and `shaders` folders.
